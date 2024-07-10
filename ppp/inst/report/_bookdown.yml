@@ -1,0 +1,6 @@
+book_filename: "report"
+delete_merged_file: true
+new_session: false
+language:
+  ui:
+    chapter_name: "Chapter "

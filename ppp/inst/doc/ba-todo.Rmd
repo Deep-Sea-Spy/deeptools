@@ -1,0 +1,45 @@
+---
+title: "TODO"
+author: "Sébastien Rochette, ThinkR"
+date: "`r Sys.Date()`"
+output: 
+  bookdown::html_document2:
+    base_format: rmarkdown::html_vignette
+    includes:
+      in_header: header_hide.html
+    toc: TRUE
+vignette: >
+  %\VignetteIndexEntry{10 - Todo}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+  
+<script type="text/javascript">
+$(document).ready(function () {
+  window.initializeCodeFolding("show" === "hide");
+});
+</script> 
+
+# TODO
+  
+```{r, include = FALSE}
+  knitr::opts_chunk$set(
+  collapse = FALSE,
+  comment = "#>",
+  out.width = "90%",
+  fig.width = 7,
+  fig.height = 6,
+  fig.align = "center",
+  eval = TRUE
+  )
+```
+
+- [x] to_carto_point() : ONC => "pycnogonide"
+- [x] to_carto_polygon() : MAR => "couverture_de_moules"
+- [x] Flip-y en paramètre
+- [] Séparer l'analyse des images zoomées ou non zoomées.
+    + Influence sur le choix du buffer de comparaison
+- [x] Choose statistics based on occurence
+    + threshold: If a group is found by only 1/5 users, do we remove it ? Do we have to define this threshold according to userlevel ?
+
+

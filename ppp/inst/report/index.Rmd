@@ -1,0 +1,28 @@
+--- 
+title: "Report on image analysis"
+author: "ThinkR"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+bibliography: [book.bib, packages.bib]
+biblio-style: apalike
+link-citations: yes
+description: "Image analysis with spatial tools"
+geometry: top=2.4cm, bottom=2.1cm, outer=2cm, inner=4cm, headheight=40pt
+lang: en
+documentclass: article
+classoption: a4paper
+favicon: "favicon.ico"
+---
+
+# Prerequisites
+
+## Install local package {deeptools}
+
+```{r, eval=FALSE}
+remotes::install_local("deeptools_0.0.2.tar.gz")
+```
+
+
+
+
+

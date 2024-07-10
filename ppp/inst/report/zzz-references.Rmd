@@ -1,0 +1,21 @@
+# List of dependencies
+
+<!-- Keep for citation  -->
+
+```{r include=FALSE}
+# automatically create a bib database for R packages
+packages <- unique(c(
+  attachment::att_from_description(here::here("DESCRIPTION")),
+  'bookdown', 'knitr', 'rmarkdown'
+))
+
+knitr::write_bib(packages, 'packages.bib')
+```
+
+`r paste(paste0("- ", packages, " (@R-", packages, ")"), collapse = "\n")`
+
+`r if (knitr::is_html_output()) '
+# References {-}
+'`
+
+

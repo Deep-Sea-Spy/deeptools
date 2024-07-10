@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html  lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Chapter 5 Exploration of “Couverture de moules” data | Report on image analysis</title>
+  <meta name="description" content="Image analysis with spatial tools">
+  <meta name="generator" content="bookdown  and GitBook 2.6.7">
+
+  <meta property="og:title" content="Chapter 5 Exploration of “Couverture de moules” data | Report on image analysis" />
+  <meta property="og:type" content="book" />
+  
+  
+  <meta property="og:description" content="Image analysis with spatial tools" />
+  
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Chapter 5 Exploration of “Couverture de moules” data | Report on image analysis" />
+  
+  <meta name="twitter:description" content="Image analysis with spatial tools" />
+  
+
+<meta name="author" content="ThinkR">
+
+
+<meta name="date" content="2019-02-04">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+<link rel="prev" href="exploration-of-pycnogonide-data.html">
+<link rel="next" href="todo.html">
+<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+        <script>
+
+</script>
+        <script>
+/* ========================================================================
+ * Bootstrap: transition.js v3.3.7
+ * http://getbootstrap.com/javascript/#transitions
+ * ========================================================================
+ * Copyright 2011-2016 Twitter, Inc.
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * ======================================================================== */
+
+
++function ($) {
+  'use strict';
+
+  // CSS TRANSITION SUPPORT (Shoutout: http://www.modernizr.com/)
+  // ============================================================
+
+  function transitionEnd() {
+    var el = document.createElement('bootstrap')
+
+    var transEndEventNames = {
+      WebkitTransition : 'webkitTransitionEnd',
+      MozTransition    : 'transitionend',
+      OTransition      : 'oTransitionEnd otransitionend',
+      transition       : 'transitionend'
+    }
+
+    for (var name in transEndEventNames) {
+      if (el.style[name] !== undefined) {
+        return { end: transEndEventNames[name] }
+      }
+    }
+
+    return false // explicit for ie8 (  ._.)
+  }
+
+  // http://blog.alexmaccaw.com/css-transitions
+  $.fn.emulateTransitionEnd = function (duration) {
+    var called = false
+    var $el = this
+    $(this).one('bsTransitionEnd', function () { called = true })
+    var callback = function () { if (!called) $($el).trigger($.support.transition.end) }
+    setTimeout(callback, duration)
+    return this
+  }
+
+  $(function () {
+    $.support.transition = transitionEnd()
+
+    if (!$.support.transition) return
+
+    $.event.special.bsTransitionEnd = {
+      bindType: $.support.transition.end,
+      delegateType: $.support.transition.end,
+      handle: function (e) {
+        if ($(e.target).is(this)) return e.handleObj.handler.apply(this, arguments)
+      }
+    }
+  })
+
+}(jQuery);
+</script>
+        <script>
+/* ========================================================================
+ * Bootstrap: collapse.js v3.3.7
+ * http://getbootstrap.com/javascript/#collapse
+ * ========================================================================
+ * Copyright 2011-2016 Twitter, Inc.
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * ======================================================================== */
+
+/* jshint latedef: false */
+
++function ($) {
+  'use strict';
+
+  // COLLAPSE PUBLIC CLASS DEFINITION
+  // ================================
+
+  var Collapse = function (element, options) {
+    this.$element      = $(element)
+    this.options       = $.extend({}, Collapse.DEFAULTS, options)
+    this.$trigger      = $('[data-toggle="collapse"][href="#' + element.id + '"],' +
+                           '[data-toggle="collapse"][data-target="#' + element.id + '"]')
+    this.transitioning = null
+
+    if (this.options.parent) {
+      this.$parent = this.getParent()
+    } else {
+      this.addAriaAndCollapsedClass(this.$element, this.$trigger)
+    }
+
+    if (this.options.toggle) this.toggle()
+  }
+
+  Collapse.VERSION  = '3.3.7'
+
+  Collapse.TRANSITION_DURATION = 350
+
+  Collapse.DEFAULTS = {
+    toggle: true
+  }
+
+  Collapse.prototype.dimension = function () {
+    var hasWidth = this.$element.hasClass('width')
+    return hasWidth ? 'width' : 'height'
+  }
+
+  Collapse.prototype.show = function () {
+    if (this.transitioning || this.$element.hasClass('in')) return
+
+    var activesData
+    var actives = this.$parent && this.$parent.children('.panel').children('.in, .collapsing')
+
+    if (actives && actives.length) {
+      activesData = actives.data('bs.collapse')
+      if (activesData && activesData.transitioning) return
+    }
+
+    var startEvent = $.Event('show.bs.collapse')
+    this.$element.trigger(startEvent)
+    if (startEvent.isDefaultPrevented()) return
+
+    if (actives && actives.length) {
+      Plugin.call(actives, 'hide')
+      activesData || actives.data('bs.collapse', null)
+    }
+
+    var dimension = this.dimension()
+
+    this.$element
+      .removeClass('collapse')
+      .addClass('collapsing')[dimension](0)
+      .attr('aria-expanded', true)
+
+    this.$trigger
+      .removeClass('collapsed')
+      .attr('aria-expanded', true)
+
+    this.transitioning = 1
+
+    var complete = function () {
+      this.$element
+        .removeClass('collapsing')
+        .addClass('collapse in')[dimension]('')
+      this.transitioning = 0
+      this.$element
+        .trigger('shown.bs.collapse')
+    }
+
+    if (!$.support.transition) return complete.call(this)
+
+    var scrollSize = $.camelCase(['scroll', dimension].join('-'))
+
+    this.$element
+      .one('bsTransitionEnd', $.proxy(complete, this))
+      .emulateTransitionEnd(Collapse.TRANSITION_DURATION)[dimension](this.$element[0][scrollSize])
+  }
+
+  Collapse.prototype.hide = function () {
+    if (this.transitioning || !this.$element.hasClass('in')) return
+
+    var startEvent = $.Event('hide.bs.collapse')
+    this.$element.trigger(startEvent)
+    if (startEvent.isDefaultPrevented()) return
+
+    var dimension = this.dimension()
+
+    this.$element[dimension](this.$element[dimension]())[0].offsetHeight
+
+    this.$element
+      .addClass('collapsing')
+      .removeClass('collapse in')
+      .attr('aria-expanded', false)
+
+    this.$trigger
+      .addClass('collapsed')
+      .attr('aria-expanded', false)
+
+    this.transitioning = 1
+
+    var complete = function () {
+      this.transitioning = 0
+      this.$element
+        .removeClass('collapsing')
+        .addClass('collapse')
+        .trigger('hidden.bs.collapse')
+    }
+
+    if (!$.support.transition) return complete.call(this)
+
+    this.$element
+      [dimension](0)
+      .one('bsTransitionEnd', $.proxy(complete, this))
+      .emulateTransitionEnd(Collapse.TRANSITION_DURATION)
+  }
+
+  Collapse.prototype.toggle = function () {
+    this[this.$element.hasClass('in') ? 'hide' : 'show']()
+  }
+
+  Collapse.prototype.getParent = function () {
+    return $(this.options.parent)
+      .find('[data-toggle="collapse"][data-parent="' + this.options.parent + '"]')
+      .each($.proxy(function (i, element) {
+        var $element = $(element)
+        this.addAriaAndCollapsedClass(getTargetFromTrigger($element), $element)
+      }, this))
+      .end()
+  }
+
+  Collapse.prototype.addAriaAndCollapsedClass = function ($element, $trigger) {
+    var isOpen = $element.hasClass('in')
+
+    $element.attr('aria-expanded', isOpen)
+    $trigger
+      .toggleClass('collapsed', !isOpen)
+      .attr('aria-expanded', isOpen)
+  }
+
+  function getTargetFromTrigger($trigger) {
+    var href
+    var target = $trigger.attr('data-target')
+      || (href = $trigger.attr('href')) && href.replace(/.*(?=#[^\s]+$)/, '') // strip for ie7
+
+    return $(target)
+  }
+
+
+  // COLLAPSE PLUGIN DEFINITION
+  // ==========================
+
+  function Plugin(option) {
+    return this.each(function () {
+      var $this   = $(this)
+      var data    = $this.data('bs.collapse')
+      var options = $.extend({}, Collapse.DEFAULTS, $this.data(), typeof option == 'object' && option)
+
+      if (!data && options.toggle && /show|hide/.test(option)) options.toggle = false
+      if (!data) $this.data('bs.collapse', (data = new Collapse(this, options)))
+      if (typeof option == 'string') data[option]()
+    })
+  }
+
+  var old = $.fn.collapse
+
+  $.fn.collapse             = Plugin
+  $.fn.collapse.Constructor = Collapse
+
+
+  // COLLAPSE NO CONFLICT
+  // ====================
+
+  $.fn.collapse.noConflict = function () {
+    $.fn.collapse = old
+    return this
+  }
+
+
+  // COLLAPSE DATA-API
+  // =================
+
+  $(document).on('click.bs.collapse.data-api', '[data-toggle="collapse"]', function (e) {
+    var $this   = $(this)
+
+    if (!$this.attr('data-target')) e.preventDefault()
+
+    var $target = getTargetFromTrigger($this)
+    var data    = $target.data('bs.collapse')
+    var option  = data ? 'toggle' : $this.data()
+
+    Plugin.call($target, option)
+  })
+
+}(jQuery);
+</script>
+        <script>
+window.initializeCodeFolding = function(show) {
+
+  // handlers for show-all and hide all
+  $("#rmd-show-all-code").click(function() {
+    $('div.r-code-collapse').each(function() {
+      $(this).collapse('show');
+    });
+  });
+  $("#rmd-hide-all-code").click(function() {
+    $('div.r-code-collapse').each(function() {
+      $(this).collapse('hide');
+    });
+  });
+
+  // index for unique code element ids
+  var currentIndex = 1;
+
+  // select all R code blocks
+  var rCodeBlocks = $('pre.sourceCode, pre.r, pre.python, pre.bash, pre.sql, pre.cpp, pre.stan, pre.js, pre.css, pre.html, pre.yaml');
+  rCodeBlocks.each(function() {
+
+    // create a collapsable div to wrap the code in
+    var div = $('<div class="collapse r-code-collapse"></div>');
+    if (show)
+      div.addClass('in');
+    var id = 'rcode-643E0F36' + currentIndex++;
+    div.attr('id', id);
+    $(this).before(div);
+    $(this).detach().appendTo(div);
+
+    // add a show code button right above
+    var showCodeText = $('<span>' + (show ? 'Hide' : 'Code') + '</span>');
+    var showCodeButton = $('<button type="button" class="btn btn-default btn-xs code-folding-btn pull-right"></button>');
+    showCodeButton.append(showCodeText);
+    showCodeButton
+        .attr('data-toggle', 'collapse')
+        .attr('data-target', '#' + id)
+        .attr('aria-expanded', show)
+        .attr('aria-controls', id);
+
+    var buttonRow = $('<div class="row"></div>');
+    var buttonCol = $('<div class="col-md-12"></div>');
+
+    buttonCol.append(showCodeButton);
+    buttonRow.append(buttonCol);
+
+    div.before(buttonRow);
+
+    // update state of button on show/hide
+    div.on('hidden.bs.collapse', function () {
+      showCodeText.text('Code');
+    });
+    div.on('show.bs.collapse', function () {
+      showCodeText.text('Hide');
+    });
+  });
+
+}
+</script>
+        <script>
+/* ========================================================================
+ * Bootstrap: dropdown.js v3.3.7
+ * http://getbootstrap.com/javascript/#dropdowns
+ * ========================================================================
+ * Copyright 2011-2016 Twitter, Inc.
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * ======================================================================== */
+
+
++function ($) {
+  'use strict';
+
+  // DROPDOWN CLASS DEFINITION
+  // =========================
+
+  var backdrop = '.dropdown-backdrop'
+  var toggle   = '[data-toggle="dropdown"]'
+  var Dropdown = function (element) {
+    $(element).on('click.bs.dropdown', this.toggle)
+  }
+
+  Dropdown.VERSION = '3.3.7'
+
+  function getParent($this) {
+    var selector = $this.attr('data-target')
+
+    if (!selector) {
+      selector = $this.attr('href')
+      selector = selector && /#[A-Za-z]/.test(selector) && selector.replace(/.*(?=#[^\s]*$)/, '') // strip for ie7
+    }
+
+    var $parent = selector && $(selector)
+
+    return $parent && $parent.length ? $parent : $this.parent()
+  }
+
+  function clearMenus(e) {
+    if (e && e.which === 3) return
+    $(backdrop).remove()
+    $(toggle).each(function () {
+      var $this         = $(this)
+      var $parent       = getParent($this)
+      var relatedTarget = { relatedTarget: this }
+
+      if (!$parent.hasClass('open')) return
+
+      if (e && e.type == 'click' && /input|textarea/i.test(e.target.tagName) && $.contains($parent[0], e.target)) return
+
+      $parent.trigger(e = $.Event('hide.bs.dropdown', relatedTarget))
+
+      if (e.isDefaultPrevented()) return
+
+      $this.attr('aria-expanded', 'false')
+      $parent.removeClass('open').trigger($.Event('hidden.bs.dropdown', relatedTarget))
+    })
+  }
+
+  Dropdown.prototype.toggle = function (e) {
+    var $this = $(this)
+
+    if ($this.is('.disabled, :disabled')) return
+
+    var $parent  = getParent($this)
+    var isActive = $parent.hasClass('open')
+
+    clearMenus()
+
+    if (!isActive) {
+      if ('ontouchstart' in document.documentElement && !$parent.closest('.navbar-nav').length) {
+        // if mobile we use a backdrop because click events don't delegate
+        $(document.createElement('div'))
+          .addClass('dropdown-backdrop')
+          .insertAfter($(this))
+          .on('click', clearMenus)
+      }
+
+      var relatedTarget = { relatedTarget: this }
+      $parent.trigger(e = $.Event('show.bs.dropdown', relatedTarget))
+
+      if (e.isDefaultPrevented()) return
+
+      $this
+        .trigger('focus')
+        .attr('aria-expanded', 'true')
+
+      $parent
+        .toggleClass('open')
+        .trigger($.Event('shown.bs.dropdown', relatedTarget))
+    }
+
+    return false
+  }
+
+  Dropdown.prototype.keydown = function (e) {
+    if (!/(38|40|27|32)/.test(e.which) || /input|textarea/i.test(e.target.tagName)) return
+
+    var $this = $(this)
+
+    e.preventDefault()
+    e.stopPropagation()
+
+    if ($this.is('.disabled, :disabled')) return
+
+    var $parent  = getParent($this)
+    var isActive = $parent.hasClass('open')
+
+    if (!isActive && e.which != 27 || isActive && e.which == 27) {
+      if (e.which == 27) $parent.find(toggle).trigger('focus')
+      return $this.trigger('click')
+    }
+
+    var desc = ' li:not(.disabled):visible a'
+    var $items = $parent.find('.dropdown-menu' + desc)
+
+    if (!$items.length) return
+
+    var index = $items.index(e.target)
+
+    if (e.which == 38 && index > 0)                 index--         // up
+    if (e.which == 40 && index < $items.length - 1) index++         // down
+    if (!~index)                                    index = 0
+
+    $items.eq(index).trigger('focus')
+  }
+
+
+  // DROPDOWN PLUGIN DEFINITION
+  // ==========================
+
+  function Plugin(option) {
+    return this.each(function () {
+      var $this = $(this)
+      var data  = $this.data('bs.dropdown')
+
+      if (!data) $this.data('bs.dropdown', (data = new Dropdown(this)))
+      if (typeof option == 'string') data[option].call($this)
+    })
+  }
+
+  var old = $.fn.dropdown
+
+  $.fn.dropdown             = Plugin
+  $.fn.dropdown.Constructor = Dropdown
+
+
+  // DROPDOWN NO CONFLICT
+  // ====================
+
+  $.fn.dropdown.noConflict = function () {
+    $.fn.dropdown = old
+    return this
+  }
+
+
+  // APPLY TO STANDARD DROPDOWN ELEMENTS
+  // ===================================
+
+  $(document)
+    .on('click.bs.dropdown.data-api', clearMenus)
+    .on('click.bs.dropdown.data-api', '.dropdown form', function (e) { e.stopPropagation() })
+    .on('click.bs.dropdown.data-api', toggle, Dropdown.prototype.toggle)
+    .on('keydown.bs.dropdown.data-api', toggle, Dropdown.prototype.keydown)
+    .on('keydown.bs.dropdown.data-api', '.dropdown-menu', Dropdown.prototype.keydown)
+
+}(jQuery);
+</script>
+        <style type="text/css">
+/* Code folding */
+/* Each code block button */
+.code-folding-btn { margin-bottom: 4px; }
+.row {
+    display: flex;
+    border-bottom: solid 1px #d7d7d7;
+}
+.collapse { display: none; }
+.in {
+    display: block ;
+    border: solid 1px #d7d7d7;
+    border-radius: 5px;
+}
+.col-md-12 {
+    margin: 0 0 0 auto;
+}
+/* Main show/hide button */
+#code-folding-buttons {
+    /* float: right; */
+    position: fixed;
+    top: 50px;
+    z-index: 1000;
+    right: 10px;
+}
+#code-folding-buttons .pull-right > .dropdown-menu {
+    right: 0;
+    left: auto;
+}
+#code-folding-buttons .btn.btn-default.btn-xs.dropdown-toggle {
+    float: right;
+}
+#code-folding-buttons.open > .dropdown-menu {
+    display: block;
+}
+#code-folding-buttons .dropdown-menu {
+    /* position: absolute;*/
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    display: none;
+    /*float: left;*/
+    min-width: 160px;
+    padding: 5px 0;
+    margin: 2px 0 0;
+    font-size: 14px;
+    text-align: left;
+    list-style: none;
+    background-color: #fff;
+    -webkit-background-clip: padding-box;
+    background-clip: padding-box;
+    border: 1px solid #ccc;
+    border: 1px solid rgba(0,0,0,.15);
+    border-radius: 4px;
+    -webkit-box-shadow: 0 6px 12px rgba(0,0,0,.175);
+    box-shadow: 0 6px 12px rgba(0,0,0,.175);
+}
+#code-folding-buttons .dropdown-menu li {
+    padding: 5px;
+    list-style: none;
+}
+#code-folding-buttons.open > .dropdown-menu {
+    display: block;
+}
+/* End code folding */
+</style>
+        <style type="text/css">
+/* Special text */
+.advert {
+  color: #FF8929;
+  font-style: italic;
+}
+.codecommand, .codebox code {
+  background-color: #E0E0E0;
+  font-family: monospace;
+}
+.Large {
+  font-size: 2rem;
+}
+.exercise, .exo {
+  color: #00BA10;
+  font-size: 1.1rem;
+}
+.math.inline {
+    background-color: aliceblue;
+}
+
+/* Special backgrounds*/
+.blueShaded {
+  background-color: #D6E8F5;
+  font-family: monospace;
+}
+.blueShaded pre:not([class]) {
+  background-color: #D6E8F5;
+}
+.redbox {  
+  background-color: #FF7F7F;
+  padding: 2px 5px;
+}
+
+/* Document formatting*/
+body {
+  font-family: "Noto Sans", sans-serif; 
+  font-size: 1.5rem;
+  text-align: justify;
+}
+
+h3 {
+  font-style: italic;
+}
+
+/* Figures */
+.figure {
+  margin-bottom: 1.5em;
+}
+
+/* Custom specific to my bookdown template */
+.body-inner {
+/*  background-color: #1e73be;*/
+    background-color: #f6f6f6;
+} 
+.book .book-body .page-wrapper .page-inner {
+    max-width: 1025px;
+}
+.book .book-body .page-wrapper .page-inner section {
+    padding: 5px 3em;
+}
+.book .book-body .page-wrapper .page-inner section.normal p.caption {
+  margin: 0 10%;
+  text-align: center;
+  font-size: 1.4rem;
+}
+
+.page-inner {
+        max-width: 1025px;
+        margin-left: auto;
+        margin-right: auto;
+        background-color: white;
+        /* padding: 1em 30px 15px; */
+    }
+
+.book .book-body .navigation {
+    font-size: 70px;
+    color: #ccc;
+    text-align: center;
+}
+
+.book .book-body .page-wrapper .page-inner section.normal a {
+    color: #DE633C;
+}
+
+/* thinkr.css 
+.container-fluid.main-container {
+    margin-top: 80px;
+}
+h1.title {
+    margin-top: 80px;
+}
+.container-fluid.main-container h1.title {
+    margin-top: 0px;
+}
+*/
+.logos {
+    position: fixed;
+    top: 50px;
+    width: 100px;
+    left: 330px;
+    z-index: 1;
+}
+.logos img {
+    margin: 5px auto; /* Modified for gitbook */
+    display: block;
+    height: 60px;
+}
+a {
+    color: #15b7d6;
+}
+h1 {
+    color: #DE633C;
+}
+h2 {
+    color: #15b7d6;
+}
+
+</style>
+        <script>
+        $(document).ready(function () {
+window.initializeCodeFolding("show" === "hide");
+});
+        </script>
+        
+
+         <script>
+         document.write('<div id="code-folding-buttons" class="btn-group pull-right"><button class="btn btn-default btn-xs dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-_extension-text-contrast=""><span>Show/Hide all code</span><span class="caret"></span></button><ul class="dropdown-menu" style="min-width: 50px;"><li><a id="rmd-show-all-code" href="#">Show All Code</a></li><li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li></ul></div>')
+
+document.write('<div class="logos"><a href="https://thinkr.fr"><img src="data:image/png;base64,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" alt="logo-ThinkR"/></a></div>')
+</script>
+
+
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">Report on image analysis</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="1" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i><b>1</b> Prerequisites</a><ul>
+<li class="chapter" data-level="1.1" data-path="index.html"><a href="index.html#install-local-package-deeptools"><i class="fa fa-check"></i><b>1.1</b> Install local package {deeptools}</a></li>
+</ul></li>
+<li class="chapter" data-level="2" data-path="general-exploration-of-the-data.html"><a href="general-exploration-of-the-data.html"><i class="fa fa-check"></i><b>2</b> General exploration of the data</a><ul>
+<li class="chapter" data-level="2.1" data-path="general-exploration-of-the-data.html"><a href="general-exploration-of-the-data.html#packages"><i class="fa fa-check"></i><b>2.1</b> Packages</a></li>
+<li class="chapter" data-level="2.2" data-path="general-exploration-of-the-data.html"><a href="general-exploration-of-the-data.html#colours"><i class="fa fa-check"></i><b>2.2</b> Colours</a></li>
+<li class="chapter" data-level="2.3" data-path="general-exploration-of-the-data.html"><a href="general-exploration-of-the-data.html#load-data"><i class="fa fa-check"></i><b>2.3</b> Load data</a></li>
+<li class="chapter" data-level="2.4" data-path="general-exploration-of-the-data.html"><a href="general-exploration-of-the-data.html#prepare-data"><i class="fa fa-check"></i><b>2.4</b> Prepare data</a></li>
+<li class="chapter" data-level="2.5" data-path="general-exploration-of-the-data.html"><a href="general-exploration-of-the-data.html#percentage-participation-part"><i class="fa fa-check"></i><b>2.5</b> percentage participation (part)</a></li>
+<li class="chapter" data-level="2.6" data-path="general-exploration-of-the-data.html"><a href="general-exploration-of-the-data.html#number-of-participants-per-number-of-image-annotated"><i class="fa fa-check"></i><b>2.6</b> Number of participants per number of image annotated</a></li>
+<li class="chapter" data-level="2.7" data-path="general-exploration-of-the-data.html"><a href="general-exploration-of-the-data.html#number-of-images-annotated-by-participant"><i class="fa fa-check"></i><b>2.7</b> Number of images annotated by participant</a></li>
+<li class="chapter" data-level="2.8" data-path="general-exploration-of-the-data.html"><a href="general-exploration-of-the-data.html#number-of-time-an-image-was-annotated"><i class="fa fa-check"></i><b>2.8</b> Number of time an image was annotated</a></li>
+<li class="chapter" data-level="2.9" data-path="general-exploration-of-the-data.html"><a href="general-exploration-of-the-data.html#other-tops-in-images-in-onc"><i class="fa fa-check"></i><b>2.9</b> Other tops in images in ONC</a></li>
+<li class="chapter" data-level="2.10" data-path="general-exploration-of-the-data.html"><a href="general-exploration-of-the-data.html#exploration-of-userlevel-in-onc"><i class="fa fa-check"></i><b>2.10</b> Exploration of userlevel in ONC</a><ul>
+<li class="chapter" data-level="2.10.1" data-path="general-exploration-of-the-data.html"><a href="general-exploration-of-the-data.html#userlevel-username-chipiok"><i class="fa fa-check"></i><b>2.10.1</b> <code>Userlevel</code>: <code>username == &quot;chipiok&quot;</code></a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="exploration-of-buccinide-data.html"><a href="exploration-of-buccinide-data.html"><i class="fa fa-check"></i><b>3</b> Exploration of “Buccinide” data</a><ul>
+<li class="chapter" data-level="3.1" data-path="exploration-of-buccinide-data.html"><a href="exploration-of-buccinide-data.html#packages-1"><i class="fa fa-check"></i><b>3.1</b> Packages</a></li>
+<li class="chapter" data-level="3.2" data-path="exploration-of-buccinide-data.html"><a href="exploration-of-buccinide-data.html#colours-1"><i class="fa fa-check"></i><b>3.2</b> Colours</a></li>
+<li class="chapter" data-level="3.3" data-path="exploration-of-buccinide-data.html"><a href="exploration-of-buccinide-data.html#load-data-1"><i class="fa fa-check"></i><b>3.3</b> Load data</a></li>
+<li class="chapter" data-level="3.4" data-path="exploration-of-buccinide-data.html"><a href="exploration-of-buccinide-data.html#prepare-data-1"><i class="fa fa-check"></i><b>3.4</b> Prepare data</a></li>
+<li class="chapter" data-level="3.5" data-path="exploration-of-buccinide-data.html"><a href="exploration-of-buccinide-data.html#extraction-of-buccinide"><i class="fa fa-check"></i><b>3.5</b> Extraction of “Buccinide”</a></li>
+<li class="chapter" data-level="3.6" data-path="exploration-of-buccinide-data.html"><a href="exploration-of-buccinide-data.html#exploration-of-annotations"><i class="fa fa-check"></i><b>3.6</b> Exploration of annotations</a><ul>
+<li class="chapter" data-level="3.6.1" data-path="exploration-of-buccinide-data.html"><a href="exploration-of-buccinide-data.html#users"><i class="fa fa-check"></i><b>3.6.1</b> Users</a></li>
+<li class="chapter" data-level="3.6.2" data-path="exploration-of-buccinide-data.html"><a href="exploration-of-buccinide-data.html#images"><i class="fa fa-check"></i><b>3.6.2</b> Images</a></li>
+<li class="chapter" data-level="3.6.3" data-path="exploration-of-buccinide-data.html"><a href="exploration-of-buccinide-data.html#example-filter_col-username-filter_val-lawzama-image_id-10681"><i class="fa fa-check"></i><b>3.6.3</b> Example: <code>filter_col = username, filter_val = &quot;Lawzama&quot;, image_id == &quot;10681&quot;</code></a></li>
+<li class="chapter" data-level="3.6.4" data-path="exploration-of-buccinide-data.html"><a href="exploration-of-buccinide-data.html#example-filter_col-username-filter_val-kazu-image_id-10681"><i class="fa fa-check"></i><b>3.6.4</b> Example: <code>filter_col = username, filter_val = &quot;Kazu&quot;, image_id == &quot;10681&quot;</code></a></li>
+<li class="chapter" data-level="3.6.5" data-path="exploration-of-buccinide-data.html"><a href="exploration-of-buccinide-data.html#example-filter_col-username-filter_val-ckazu-lawzama-image_id-10681"><i class="fa fa-check"></i><b>3.6.5</b> Example: <code>filter_col = username, filter_val = c(&quot;Kazu&quot;, &quot;Lawzama&quot;), image_id == &quot;10681&quot;</code></a></li>
+</ul></li>
+<li class="chapter" data-level="3.7" data-path="exploration-of-buccinide-data.html"><a href="exploration-of-buccinide-data.html#compare-annotations-of-the-same-image"><i class="fa fa-check"></i><b>3.7</b> Compare annotations of the same image</a><ul>
+<li class="chapter" data-level="3.7.1" data-path="exploration-of-buccinide-data.html"><a href="exploration-of-buccinide-data.html#super-impose-annotations"><i class="fa fa-check"></i><b>3.7.1</b> Super-impose annotations</a></li>
+<li class="chapter" data-level="3.7.2" data-path="exploration-of-buccinide-data.html"><a href="exploration-of-buccinide-data.html#find-common-animals-between-users"><i class="fa fa-check"></i><b>3.7.2</b> Find common animals between users</a></li>
+<li class="chapter" data-level="3.7.3" data-path="exploration-of-buccinide-data.html"><a href="exploration-of-buccinide-data.html#find-all-groups-for-all-images"><i class="fa fa-check"></i><b>3.7.3</b> Find all groups for all images</a></li>
+</ul></li>
+<li class="chapter" data-level="3.8" data-path="exploration-of-buccinide-data.html"><a href="exploration-of-buccinide-data.html#calculate-statistics-on-images"><i class="fa fa-check"></i><b>3.8</b> Calculate statistics on images</a><ul>
+<li class="chapter" data-level="3.8.1" data-path="exploration-of-buccinide-data.html"><a href="exploration-of-buccinide-data.html#number-of-objects-per-image-already-known-before"><i class="fa fa-check"></i><b>3.8.1</b> Number of objects per image (already known before)</a></li>
+<li class="chapter" data-level="3.8.2" data-path="exploration-of-buccinide-data.html"><a href="exploration-of-buccinide-data.html#statistics-on-groups"><i class="fa fa-check"></i><b>3.8.2</b> Statistics on groups</a></li>
+<li class="chapter" data-level="3.8.3" data-path="exploration-of-buccinide-data.html"><a href="exploration-of-buccinide-data.html#statistics-on-number-of-groups-by-image"><i class="fa fa-check"></i><b>3.8.3</b> Statistics on number of groups by image</a></li>
+</ul></li>
+<li class="chapter" data-level="3.9" data-path="exploration-of-buccinide-data.html"><a href="exploration-of-buccinide-data.html#estimate-average-size-of-individuals"><i class="fa fa-check"></i><b>3.9</b> Estimate average size of individuals</a></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="exploration-of-pycnogonide-data.html"><a href="exploration-of-pycnogonide-data.html"><i class="fa fa-check"></i><b>4</b> Exploration of “Pycnogonide” data</a><ul>
+<li class="chapter" data-level="4.1" data-path="exploration-of-pycnogonide-data.html"><a href="exploration-of-pycnogonide-data.html#packages-2"><i class="fa fa-check"></i><b>4.1</b> Packages</a></li>
+<li class="chapter" data-level="4.2" data-path="exploration-of-pycnogonide-data.html"><a href="exploration-of-pycnogonide-data.html#colours-2"><i class="fa fa-check"></i><b>4.2</b> Colours</a></li>
+<li class="chapter" data-level="4.3" data-path="exploration-of-pycnogonide-data.html"><a href="exploration-of-pycnogonide-data.html#load-data-2"><i class="fa fa-check"></i><b>4.3</b> Load data</a></li>
+<li class="chapter" data-level="4.4" data-path="exploration-of-pycnogonide-data.html"><a href="exploration-of-pycnogonide-data.html#prepare-data-2"><i class="fa fa-check"></i><b>4.4</b> Prepare data</a></li>
+<li class="chapter" data-level="4.5" data-path="exploration-of-pycnogonide-data.html"><a href="exploration-of-pycnogonide-data.html#extraction-of-pycnogonide"><i class="fa fa-check"></i><b>4.5</b> Extraction of “pycnogonide”</a></li>
+<li class="chapter" data-level="4.6" data-path="exploration-of-pycnogonide-data.html"><a href="exploration-of-pycnogonide-data.html#exploration-of-annotations-1"><i class="fa fa-check"></i><b>4.6</b> Exploration of annotations</a><ul>
+<li class="chapter" data-level="4.6.1" data-path="exploration-of-pycnogonide-data.html"><a href="exploration-of-pycnogonide-data.html#users-1"><i class="fa fa-check"></i><b>4.6.1</b> Users</a></li>
+<li class="chapter" data-level="4.6.2" data-path="exploration-of-pycnogonide-data.html"><a href="exploration-of-pycnogonide-data.html#images-1"><i class="fa fa-check"></i><b>4.6.2</b> Images</a></li>
+<li class="chapter" data-level="4.6.3" data-path="exploration-of-pycnogonide-data.html"><a href="exploration-of-pycnogonide-data.html#example-filter_col-username-filter_val-grillus33-image_id-10681"><i class="fa fa-check"></i><b>4.6.3</b> Example: <code>filter_col = username, filter_val = &quot;grillus33&quot;, image_id == &quot;10681&quot;</code></a></li>
+<li class="chapter" data-level="4.6.4" data-path="exploration-of-pycnogonide-data.html"><a href="exploration-of-pycnogonide-data.html#multiple-users-annotations"><i class="fa fa-check"></i><b>4.6.4</b> Multiple users annotations</a></li>
+</ul></li>
+<li class="chapter" data-level="4.7" data-path="exploration-of-pycnogonide-data.html"><a href="exploration-of-pycnogonide-data.html#find-all-groups"><i class="fa fa-check"></i><b>4.7</b> Find all groups</a></li>
+<li class="chapter" data-level="4.8" data-path="exploration-of-pycnogonide-data.html"><a href="exploration-of-pycnogonide-data.html#calculate-statistics-on-images-1"><i class="fa fa-check"></i><b>4.8</b> Calculate statistics on images</a><ul>
+<li class="chapter" data-level="4.8.1" data-path="exploration-of-pycnogonide-data.html"><a href="exploration-of-pycnogonide-data.html#number-of-objects-per-image-already-known-before-1"><i class="fa fa-check"></i><b>4.8.1</b> Number of objects per image (already known before)</a></li>
+<li class="chapter" data-level="4.8.2" data-path="exploration-of-pycnogonide-data.html"><a href="exploration-of-pycnogonide-data.html#statistics-on-groups-1"><i class="fa fa-check"></i><b>4.8.2</b> Statistics on groups</a></li>
+<li class="chapter" data-level="4.8.3" data-path="exploration-of-pycnogonide-data.html"><a href="exploration-of-pycnogonide-data.html#statistics-on-number-of-groups-by-image-1"><i class="fa fa-check"></i><b>4.8.3</b> Statistics on number of groups by image</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="exploration-of-couverture-de-moules-data.html"><a href="exploration-of-couverture-de-moules-data.html"><i class="fa fa-check"></i><b>5</b> Exploration of “Couverture de moules” data</a><ul>
+<li class="chapter" data-level="5.1" data-path="exploration-of-couverture-de-moules-data.html"><a href="exploration-of-couverture-de-moules-data.html#packages-3"><i class="fa fa-check"></i><b>5.1</b> Packages</a></li>
+<li class="chapter" data-level="5.2" data-path="exploration-of-couverture-de-moules-data.html"><a href="exploration-of-couverture-de-moules-data.html#colours-3"><i class="fa fa-check"></i><b>5.2</b> Colours</a></li>
+<li class="chapter" data-level="5.3" data-path="exploration-of-couverture-de-moules-data.html"><a href="exploration-of-couverture-de-moules-data.html#load-data-3"><i class="fa fa-check"></i><b>5.3</b> Load data</a></li>
+<li class="chapter" data-level="5.4" data-path="exploration-of-couverture-de-moules-data.html"><a href="exploration-of-couverture-de-moules-data.html#prepare-data-3"><i class="fa fa-check"></i><b>5.4</b> Prepare data</a></li>
+<li class="chapter" data-level="5.5" data-path="exploration-of-couverture-de-moules-data.html"><a href="exploration-of-couverture-de-moules-data.html#extraction-of-buccinide-1"><i class="fa fa-check"></i><b>5.5</b> Extraction of “Buccinide”</a></li>
+<li class="chapter" data-level="5.6" data-path="exploration-of-couverture-de-moules-data.html"><a href="exploration-of-couverture-de-moules-data.html#exploration-of-annotations-2"><i class="fa fa-check"></i><b>5.6</b> Exploration of annotations</a><ul>
+<li class="chapter" data-level="5.6.1" data-path="exploration-of-couverture-de-moules-data.html"><a href="exploration-of-couverture-de-moules-data.html#users-2"><i class="fa fa-check"></i><b>5.6.1</b> Users</a></li>
+<li class="chapter" data-level="5.6.2" data-path="exploration-of-couverture-de-moules-data.html"><a href="exploration-of-couverture-de-moules-data.html#images-2"><i class="fa fa-check"></i><b>5.6.2</b> Images</a></li>
+<li class="chapter" data-level="5.6.3" data-path="exploration-of-couverture-de-moules-data.html"><a href="exploration-of-couverture-de-moules-data.html#example-filter_col-username-filter_val-grillus33-image_id-14190"><i class="fa fa-check"></i><b>5.6.3</b> Example: <code>filter_col = username, filter_val = &quot;grillus33&quot;, image_id == &quot;14190&quot;</code></a></li>
+<li class="chapter" data-level="5.6.4" data-path="exploration-of-couverture-de-moules-data.html"><a href="exploration-of-couverture-de-moules-data.html#multiple-users-annotations-1"><i class="fa fa-check"></i><b>5.6.4</b> Multiple users annotations</a></li>
+</ul></li>
+<li class="chapter" data-level="5.7" data-path="exploration-of-couverture-de-moules-data.html"><a href="exploration-of-couverture-de-moules-data.html#find-all-groups-1"><i class="fa fa-check"></i><b>5.7</b> Find all groups</a></li>
+<li class="chapter" data-level="5.8" data-path="exploration-of-couverture-de-moules-data.html"><a href="exploration-of-couverture-de-moules-data.html#calculate-statistics-on-images-2"><i class="fa fa-check"></i><b>5.8</b> Calculate statistics on images</a><ul>
+<li class="chapter" data-level="5.8.1" data-path="exploration-of-couverture-de-moules-data.html"><a href="exploration-of-couverture-de-moules-data.html#number-of-objects-per-image-already-known-before-2"><i class="fa fa-check"></i><b>5.8.1</b> Number of objects per image (already known before)</a></li>
+<li class="chapter" data-level="5.8.2" data-path="exploration-of-couverture-de-moules-data.html"><a href="exploration-of-couverture-de-moules-data.html#calculate-surfaces-of-polygons"><i class="fa fa-check"></i><b>5.8.2</b> Calculate surfaces of polygons</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="6" data-path="todo.html"><a href="todo.html"><i class="fa fa-check"></i><b>6</b> TODO</a></li>
+<li class="chapter" data-level="7" data-path="list-of-dependencies.html"><a href="list-of-dependencies.html"><i class="fa fa-check"></i><b>7</b> List of dependencies</a></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+<li class="divider"></li>
+<li><a href="https://thinkr.fr" target="blank">Created by ThinkR</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Report on image analysis</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="exploration-of-couverture-de-moules-data" class="section level1">
+<h1><span class="header-section-number">Chapter 5</span> Exploration of “Couverture de moules” data</h1>
+<div id="packages-3" class="section level2">
+<h2><span class="header-section-number">5.1</span> Packages</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(dplyr)
+<span class="kw">library</span>(ggplot2)
+<span class="co"># devtools::install_github(&quot;r-spatial/sf&quot;)</span>
+<span class="kw">library</span>(sf)
+<span class="kw">library</span>(deeptools)
+<span class="kw">library</span>(lubridate)
+<span class="kw">library</span>(thinkr)
+<span class="kw">library</span>(readr)
+<span class="kw">library</span>(tidyr)</code></pre></div>
+</div>
+<div id="colours-3" class="section level2">
+<h2><span class="header-section-number">5.2</span> Colours</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">blue &lt;-<span class="st"> &quot;#093564&quot;</span>
+yellow &lt;-<span class="st"> &quot;#efcc26&quot;</span>
+grey &lt;-<span class="st"> &quot;#675546&quot;</span></code></pre></div>
+</div>
+<div id="load-data-3" class="section level2">
+<h2><span class="header-section-number">5.3</span> Load data</h2>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># load data</span>
+export_file &lt;-<span class="st"> </span><span class="kw">system.file</span>(<span class="st">&quot;data_orig/export_last.csv&quot;</span>, <span class="dt">package =</span> <span class="st">&quot;deeptools&quot;</span>)
+liste_photo &lt;-<span class="st"> </span><span class="kw">system.file</span>(<span class="st">&quot;data_orig/liste_photo.txt&quot;</span>, <span class="dt">package =</span> <span class="st">&quot;deeptools&quot;</span>)</code></pre></div>
+</div>
+<div id="prepare-data-3" class="section level2">
+<h2><span class="header-section-number">5.4</span> Prepare data</h2>
+<ul>
+<li>Cleaning of species names to be easily usable</li>
+<li>Add user_id combining username and date of image analysis just in case a user sees the same image two times.</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mission2 &lt;-<span class="st"> </span><span class="kw">read_csv</span>(export_file) <span class="op">%&gt;%</span>
+<span class="st">  </span>dplyr<span class="op">::</span><span class="kw">select</span>(<span class="op">-</span>comment) <span class="op">%&gt;%</span>
+<span class="st">  </span>tidyr<span class="op">::</span><span class="kw">extract</span>(name,
+          <span class="dt">into =</span> <span class="st">&quot;datetime&quot;</span>, <span class="dt">regex =</span> <span class="st">&quot;_([[:digit:]]+).&quot;</span>,
+          <span class="dt">remove =</span> <span class="ot">FALSE</span>
+  ) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">datetime =</span> <span class="kw">ymd_hms</span>(datetime, <span class="dt">tz =</span> <span class="st">&quot;UTC&quot;</span>)) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="co"># clean names of species</span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">name_fr_clean =</span> <span class="kw">clean_vec</span>(name_fr, <span class="dt">unique =</span> <span class="ot">FALSE</span>)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(username) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">mutate</span>(
+    <span class="dt">user_id =</span> <span class="kw">paste</span>(username, <span class="kw">as.character</span>(<span class="kw">as.numeric</span>(<span class="kw">as.factor</span>(datDeb))), <span class="dt">sep =</span> <span class="st">&quot;-&quot;</span>)
+  ) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">ungroup</span>()</code></pre></div>
+<pre><code>#&gt; Parsed with column specification:
+#&gt; cols(
+#&gt;   id = col_integer(),
+#&gt;   image_id = col_integer(),
+#&gt;   name = col_character(),
+#&gt;   username = col_character(),
+#&gt;   userlevel = col_integer(),
+#&gt;   comment = col_character(),
+#&gt;   datDeb = col_datetime(format = &quot;&quot;),
+#&gt;   datFin = col_datetime(format = &quot;&quot;),
+#&gt;   obs_code = col_character(),
+#&gt;   name_fr = col_character(),
+#&gt;   pos1x = col_integer(),
+#&gt;   pos1y = col_integer(),
+#&gt;   pos2x = col_integer(),
+#&gt;   pos2y = col_integer(),
+#&gt;   length = col_integer(),
+#&gt;   middle_x = col_integer(),
+#&gt;   middle_y = col_integer(),
+#&gt;   polygon_values = col_character()
+#&gt; )</code></pre>
+<pre><code>#&gt; Warning in rbind(names(probs), probs_f): number of columns of result is not
+#&gt; a multiple of vector length (arg 1)</code></pre>
+<pre><code>#&gt; Warning: 305088 parsing failures.
+#&gt; row # A tibble: 5 x 5 col      row col     expected  actual file                                      expected    &lt;int&gt; &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt;  &lt;chr&gt;                                     actual 1 100288 pos2x   an integ… NULL   &#39;/usr/local/lib/R/site-library/deeptools… file 2 100288 pos2y   an integ… NULL   &#39;/usr/local/lib/R/site-library/deeptools… row 3 100288 length  an integ… NULL   &#39;/usr/local/lib/R/site-library/deeptools… col 4 100288 middle… an integ… NULL   &#39;/usr/local/lib/R/site-library/deeptools… expected 5 100288 middle… an integ… NULL   &#39;/usr/local/lib/R/site-library/deeptools…
+#&gt; ... ................. ... ........................................................................... ........ ........................................................................... ...... ........................................................................... .... ........................................................................... ... ........................................................................... ... ........................................................................... ........ ...........................................................................
+#&gt; See problems(...) for more details.</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Separate observatory dataset</span>
+mission2_MAR &lt;-<span class="st"> </span>mission2 <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">filter</span>(obs_code <span class="op">==</span><span class="st"> &quot;MAR&quot;</span>)
+mission2_ONC &lt;-<span class="st"> </span>mission2 <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">filter</span>(obs_code <span class="op">==</span><span class="st"> &quot;JDF&quot;</span>)</code></pre></div>
+</div>
+<div id="extraction-of-buccinide-1" class="section level2">
+<h2><span class="header-section-number">5.5</span> Extraction of “Buccinide”</h2>
+<p>Function <code>to_carto</code> extract and transform data as spatial object for following analyses.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Filter on Buccinide only</span>
+MAR_mussel &lt;-<span class="st"> </span>mission2_MAR <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">filter</span>(name_fr_clean <span class="op">==</span><span class="st"> &quot;couverture_de_moules&quot;</span>)
+
+<span class="co"># Filter and transform as spatial data</span>
+MAR_mussel_carto &lt;-<span class="st"> </span>mission2_MAR <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">filter</span>(name_fr_clean <span class="op">==</span><span class="st"> &quot;couverture_de_moules&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">to_carto</span>(name_fr_clean, <span class="st">&quot;couverture_de_moules&quot;</span>)</code></pre></div>
+<p><em>Only because it is nice</em></p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">ggplot</span>(MAR_mussel_carto) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_sf</span>(<span class="kw">aes</span>(<span class="dt">fill =</span> <span class="kw">as.character</span>(image_id)), <span class="dt">alpha =</span> <span class="fl">0.1</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">guides</span>(<span class="dt">fill =</span> <span class="ot">FALSE</span>)</code></pre></div>
+<p><img src="report_files/figure-html/unnamed-chunk-61-1.png" width="90%" style="display: block; margin: auto;" /></p>
+</div>
+<div id="exploration-of-annotations-2" class="section level2">
+<h2><span class="header-section-number">5.6</span> Exploration of annotations</h2>
+<div id="users-2" class="section level3">
+<h3><span class="header-section-number">5.6.1</span> Users</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">MAR_mussel <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">count</span>(username) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">arrange</span>(<span class="kw">desc</span>(n))</code></pre></div>
+<pre><code>#&gt; # A tibble: 2 x 2
+#&gt;   username      n
+#&gt;   &lt;chr&gt;     &lt;int&gt;
+#&gt; 1 chipiok    1527
+#&gt; 2 grillus33    71</code></pre>
+</div>
+<div id="images-2" class="section level3">
+<h3><span class="header-section-number">5.6.2</span> Images</h3>
+<ul>
+<li>Number of annotations by image</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">MAR_mussel <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">count</span>(image_id) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">arrange</span>(<span class="kw">desc</span>(n))</code></pre></div>
+<pre><code>#&gt; # A tibble: 133 x 2
+#&gt;    image_id     n
+#&gt;       &lt;int&gt; &lt;int&gt;
+#&gt;  1    14411    32
+#&gt;  2    14589    28
+#&gt;  3    14186    27
+#&gt;  4    14307    25
+#&gt;  5    14281    23
+#&gt;  6    14326    23
+#&gt;  7    14396    21
+#&gt;  8    14552    21
+#&gt;  9    14352    20
+#&gt; 10    14147    19
+#&gt; # … with 123 more rows</code></pre>
+<ul>
+<li>Number of users by image</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">MAR_mussel <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(image_id) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">n_users =</span> <span class="kw">length</span>(<span class="kw">unique</span>(user_id))) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">arrange</span>(<span class="kw">desc</span>(n_users))</code></pre></div>
+<pre><code>#&gt; # A tibble: 133 x 2
+#&gt;    image_id n_users
+#&gt;       &lt;int&gt;   &lt;int&gt;
+#&gt;  1    14186       2
+#&gt;  2    14190       2
+#&gt;  3    14281       2
+#&gt;  4    14307       2
+#&gt;  5    14326       2
+#&gt;  6    14329       2
+#&gt;  7    14352       2
+#&gt;  8    14387       2
+#&gt;  9    14396       2
+#&gt; 10    14411       2
+#&gt; # … with 123 more rows</code></pre>
+</div>
+<div id="example-filter_col-username-filter_val-grillus33-image_id-14190" class="section level3">
+<h3><span class="header-section-number">5.6.3</span> Example: <code>filter_col = username, filter_val = &quot;grillus33&quot;, image_id == &quot;14190&quot;</code></h3>
+<pre><code>#&gt; # A tibble: 18 x 2
+#&gt;    image_id     n
+#&gt;       &lt;int&gt; &lt;int&gt;
+#&gt;  1    14191     5
+#&gt;  2    14608     5
+#&gt;  3    14623     5
+#&gt;  4    14635     5
+#&gt;  5    14654     5
+#&gt;  6    14184     4
+#&gt;  7    14190     4
+#&gt;  8    14286     4
+#&gt;  9    14358     4
+#&gt; 10    14387     4
+#&gt; 11    14470     4
+#&gt; 12    14535     4
+#&gt; 13    14132     3
+#&gt; 14    14281     3
+#&gt; 15    14329     3
+#&gt; 16    14396     3
+#&gt; 17    14469     3
+#&gt; 18    14636     3</code></pre>
+<p><img src="report_files/figure-html/unnamed-chunk-65-1.png" width="90%" style="display: block; margin: auto;" /></p>
+</div>
+<div id="multiple-users-annotations-1" class="section level3">
+<h3><span class="header-section-number">5.6.4</span> Multiple users annotations</h3>
+<ul>
+<li>Example with <code>image_id = 14190</code></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">gg_users_image</span>(<span class="dt">x =</span> MAR_mussel_carto,
+               <span class="dt">image_id =</span> <span class="dv">14190</span>)</code></pre></div>
+<p><img src="report_files/figure-html/unnamed-chunk-66-1.png" width="90%" style="display: block; margin: auto;" /></p>
+<ul>
+<li>Because we work with polygons, buffer is not totally necessary. However, just in case there are small areas, we can set a small buffer.</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">gg_users_image</span>(<span class="dt">x =</span> MAR_mussel_carto,
+               <span class="dt">image_id =</span> <span class="dv">14190</span>, <span class="dt">buffer =</span> <span class="dv">5</span>)</code></pre></div>
+<p><img src="report_files/figure-html/unnamed-chunk-67-1.png" width="90%" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="find-all-groups-1" class="section level2">
+<h2><span class="header-section-number">5.7</span> Find all groups</h2>
+<p>As shown for “Buccinides”, only one function is required to determine the differents groups of annotations in all images. This requires function <code>find_groups_in_all_images</code>, some time of computation and RAM available.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Chunk not evaluated in Rmd as results are saved</span>
+MAR_mussel_carto_groups &lt;-<span class="st"> </span>MAR_mussel_carto <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">find_groups_in_all_images</span>(<span class="dt">.progress =</span> <span class="ot">TRUE</span>, <span class="dt">keep_list =</span> <span class="ot">FALSE</span>,
+                            <span class="dt">as_sf =</span> <span class="ot">FALSE</span>, <span class="dt">dist_buffer =</span> <span class="dv">5</span>)
+
+<span class="cf">if</span> (<span class="op">!</span><span class="kw">dir.exists</span>(here<span class="op">::</span><span class="kw">here</span>(<span class="st">&quot;inst/outputs&quot;</span>))) {
+  <span class="kw">dir.create</span>(<span class="st">&quot;inst/outputs&quot;</span>, <span class="dt">recursive =</span> <span class="ot">TRUE</span>) 
+}
+
+readr<span class="op">::</span><span class="kw">write_rds</span>(
+  MAR_mussel_carto_groups,
+  here<span class="op">::</span><span class="kw">here</span>(<span class="st">&quot;inst/outputs&quot;</span>, <span class="st">&quot;MAR_mussel_carto_groups.rds&quot;</span>), 
+  <span class="dt">compress =</span> <span class="st">&quot;gz&quot;</span>)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">outwd &lt;-<span class="st"> </span><span class="kw">system.file</span>(<span class="st">&quot;outputs&quot;</span>, <span class="dt">package =</span> <span class="st">&quot;deeptools&quot;</span>)
+MAR_mussel_carto_groups &lt;-<span class="st"> </span>readr<span class="op">::</span><span class="kw">read_rds</span>(<span class="kw">file.path</span>(outwd, <span class="st">&quot;MAR_mussel_carto_groups.rds&quot;</span>))</code></pre></div>
+</div>
+<div id="calculate-statistics-on-images-2" class="section level2">
+<h2><span class="header-section-number">5.8</span> Calculate statistics on images</h2>
+<p><em>As a reminder, a group of objects is supposed to be a unique individual.</em></p>
+<div id="number-of-objects-per-image-already-known-before-2" class="section level3">
+<h3><span class="header-section-number">5.8.1</span> Number of objects per image (already known before)</h3>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Number of objects per image (already known before)</span>
+mussel_nobjects &lt;-<span class="st"> </span>MAR_mussel_carto_groups <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">count</span>(image_id) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">rename</span>(<span class="dt">n_objects =</span> n) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">count</span>(n_objects) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">arrange</span>(<span class="kw">desc</span>(n)) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">rename</span>(<span class="dt">n_images =</span> n)
+
+<span class="co"># Number of marked objects by images</span>
+mussel_nobjects</code></pre></div>
+<pre><code>#&gt; # A tibble: 24 x 2
+#&gt;    n_objects n_images
+#&gt;        &lt;int&gt;    &lt;int&gt;
+#&gt;  1        11       19
+#&gt;  2        10       14
+#&gt;  3        12       14
+#&gt;  4        13       12
+#&gt;  5        14        8
+#&gt;  6        15        7
+#&gt;  7         4        6
+#&gt;  8         8        6
+#&gt;  9         9        6
+#&gt; 10         5        5
+#&gt; # … with 14 more rows</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Plot</span>
+<span class="kw">ggplot</span>(mussel_nobjects) <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_col</span>(<span class="kw">aes</span>(<span class="dt">x =</span> n_objects, <span class="dt">y =</span> n_images), <span class="dt">width =</span> <span class="dv">1</span>, 
+           <span class="dt">fill =</span> yellow, <span class="dt">colour =</span> grey) <span class="op">+</span>
+<span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Total number of objects identified in images&quot;</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">xlab</span>(<span class="st">&quot;Number of objects by image&quot;</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">ylab</span>(<span class="st">&quot;Number of images&quot;</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.background =</span> <span class="kw">element_rect</span>(<span class="dt">fill =</span> blue))</code></pre></div>
+<p><img src="report_files/figure-html/unnamed-chunk-70-1.png" width="90%" style="display: block; margin: auto;" /></p>
+</div>
+<div id="calculate-surfaces-of-polygons" class="section level3">
+<h3><span class="header-section-number">5.8.2</span> Calculate surfaces of polygons</h3>
+<ul>
+<li>We calculte the average and the standard deviation of groups</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">MAR_mussel_carto_groups_area &lt;-<span class="st"> </span>MAR_mussel_carto_groups <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">area =</span> MAR_mussel_carto_groups <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">           </span><span class="kw">st_sf</span>() <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">st_area</span>()) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(image_id, group_kept) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">summarise</span>(<span class="dt">nb_polygons_in_group =</span> <span class="kw">n</span>(),
+            <span class="dt">area_mean =</span> <span class="kw">mean</span>(area),
+            <span class="dt">area_sd =</span> <span class="kw">sd</span>(area),
+            <span class="dt">area_sd =</span> <span class="kw">if_else</span>(<span class="kw">is.na</span>(area_sd), <span class="dv">0</span>, area_sd),
+            <span class="dt">area_cv =</span> area_sd <span class="op">/</span><span class="st"> </span>area_mean) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">arrange</span>(<span class="kw">desc</span>(nb_polygons_in_group))
+
+MAR_mussel_carto_groups_area</code></pre></div>
+<pre><code>#&gt; # A tibble: 1,508 x 6
+#&gt; # Groups:   image_id [133]
+#&gt;    image_id group_kept nb_polygons_in_group area_mean  area_sd area_cv
+#&gt;       &lt;int&gt; &lt;chr&gt;                     &lt;int&gt;     &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt;
+#&gt;  1    14186 1-16                          2     1656.   211.    0.127 
+#&gt;  2    14186 11-20                         2   176066. 41803.    0.237 
+#&gt;  3    14186 12-22                         2    31141.  4061.    0.130 
+#&gt;  4    14186 13-23                         2     5800.  4407.    0.760 
+#&gt;  5    14186 2-17                          2      285.   159.    0.557 
+#&gt;  6    14186 3-15                          2     2379.    89.4   0.0376
+#&gt;  7    14186 4-18                          2     1452    135.    0.0930
+#&gt;  8    14186 5-26                          2      823.     9.55  0.0116
+#&gt;  9    14186 6-27                          2      608.   319.    0.525 
+#&gt; 10    14186 7-14                          2     8050    142.    0.0177
+#&gt; # … with 1,498 more rows</code></pre>
+<ul>
+<li>Graph of areas</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">MAR_mussel_carto_groups_area <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">ggplot</span>() <span class="op">+</span>
+<span class="st">  </span><span class="kw">geom_histogram</span>(<span class="kw">aes</span>(area_mean), <span class="dt">bins =</span> <span class="dv">50</span>,
+             <span class="dt">fill =</span> yellow, <span class="dt">colour =</span> grey) <span class="op">+</span>
+<span class="st">  </span><span class="kw">ggtitle</span>(<span class="st">&quot;Average areas of groups identified in images&quot;</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">xlab</span>(<span class="st">&quot;Area (log scale)&quot;</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">ylab</span>(<span class="st">&quot;Number of groups&quot;</span>) <span class="op">+</span>
+<span class="st">  </span><span class="kw">theme</span>(<span class="dt">panel.background =</span> <span class="kw">element_rect</span>(<span class="dt">fill =</span> blue)) <span class="op">+</span>
+<span class="st">  </span><span class="kw">scale_x_log10</span>()</code></pre></div>
+<p><img src="report_files/figure-html/unnamed-chunk-72-1.png" width="90%" style="display: block; margin: auto;" /></p>
+
+</div>
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="exploration-of-pycnogonide-data.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="todo.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": false,
+"facebook": true,
+"twitter": true,
+"google": false,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"all": ["facebook", "google", "twitter", "linkedin", "weibo", "instapaper"]
+},
+"fontsettings": {
+"theme": "white",
+"family": "sans",
+"size": 2
+},
+"edit": {
+"link": null,
+"text": null
+},
+"history": {
+"link": null,
+"text": null
+},
+"download": ["report.pdf"],
+"toc": {
+"collapse": "subsection"
+}
+});
+});
+</script>
+
+</body>
+
+</html>

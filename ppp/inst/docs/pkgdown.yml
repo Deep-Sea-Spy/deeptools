@@ -1,0 +1,10 @@
+pandoc: 1.19.2.4
+pkgdown: 1.3.0
+pkgdown_sha: ~
+articles:
+  aa-general-exploration: aa-general-exploration.html
+  ab-buccinides: ab-buccinides.html
+  ac-pycnogonide: ac-pycnogonide.html
+  ad-couverture_de_moules: ad-couverture_de_moules.html
+  ba-todo: ba-todo.html
+

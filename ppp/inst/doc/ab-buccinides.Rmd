@@ -1,0 +1,508 @@
+---
+title: "Buccinides"
+author: "Sébastien Rochette, ThinkR"
+date: "`r Sys.Date()`"
+output: 
+  bookdown::html_document2:
+    base_format: rmarkdown::html_vignette
+    includes:
+      in_header: header_hide.html
+    toc: TRUE
+vignette: >
+  %\VignetteIndexEntry{02 - Buccinides}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+<script type="text/javascript">
+$(document).ready(function () {
+  window.initializeCodeFolding("show" === "hide");
+});
+</script> 
+
+# Exploration of "Buccinide" data
+
+```{r, include = FALSE}
+  knitr::opts_chunk$set(
+  collapse = FALSE,
+  comment = "#>",
+  out.width = "90%",
+  fig.width = 7,
+  fig.height = 6,
+  fig.align = "center",
+  eval = TRUE
+  )
+```
+  
+## Packages
+```{r, message=FALSE}
+library(dplyr)
+library(lubridate)
+library(tidyr)
+library(ggplot2)
+# devtools::install_github("r-spatial/sf")
+library(sf)
+library(raster)
+library(fasterize)
+library(igraph)
+library(rasterVis)
+library(cowplot)
+library(deeptools)
+# devtools::document()
+# devtools::document()
+# devtools::load_all(here::here(""))
+```
+
+## Colours
+```{r}
+blue <- "#093564"
+yellow <- "#efcc26"
+grey <- "#675546"
+```
+
+## Load data
+```{r}
+# load data
+export_file <- system.file("data_orig/export_last.csv", package = "deeptools")
+liste_photo <- system.file("data_orig/liste_photo.txt", package = "deeptools")
+```
+
+## Prepare data
+- Cleaning of species names to be easily usable
+- Add user_id combining username and date of image analysis just in case a user sees the same image two times.
+
+```{r}
+mission2 <- readr::read_csv(export_file) %>%
+  dplyr::select(-comment) %>%
+  tidyr::extract(name,
+          into = "datetime", regex = "_([[:digit:]]+).",
+          remove = FALSE
+  ) %>%
+  mutate(datetime = ymd_hms(datetime, tz = "UTC")) %>%
+  # clean names of species
+  mutate(name_fr_clean = thinkr::clean_vec(name_fr, unique = FALSE)) %>% 
+  group_by(username) %>%
+  mutate(
+    user_id = paste(username, as.character(as.numeric(as.factor(datDeb))), sep = "-")
+  ) %>%
+  ungroup()
+
+# Separate observatory dataset
+mission2_MAR <- mission2 %>% filter(obs_code == "MAR")
+mission2_ONC <- mission2 %>% filter(obs_code == "JDF")
+```
+
+## Extraction of "Buccinide"
+
+Function `to_carto` extract and transform data as spatial object for following analyses.
+
+```{r}
+# Filter on Buccinide only
+ONC2_bucc <- mission2_ONC %>% 
+  filter(name_fr_clean == "escargot_buccinide")
+
+# Filter and transform as spatial data
+ONC2_bucc_carto <- mission2_ONC %>%
+  to_carto(name_fr_clean, "escargot_buccinide")
+```
+
+## Exploration of annotations 
+### Users
+
+```{r}
+ONC2_bucc %>% 
+  count(username) %>% 
+  arrange(desc(n))
+```
+
+### Images
+
+```{r}
+ONC2_bucc %>% 
+  count(image_id) %>% 
+  arrange(desc(n))
+```
+
+### Example: `filter_col = username, filter_val = "Lawzama", image_id == "10681"`
+
+```{r, echo=FALSE}
+ONC2_bucc %>% 
+  filter(username == "Lawzama") %>% 
+  count(image_id) %>% 
+  arrange(desc(n))
+
+gg_users_image(x = ONC2_bucc_carto,
+               filter_col = username, filter_val = "Lawzama",
+               image_id = 10681)
+
+```
+
+### Example: `filter_col = username, filter_val = "Kazu", image_id == "10681"`
+
+```{r}
+gg_users_image(x = ONC2_bucc_carto,
+               filter_col = username, filter_val = "Kazu",
+               image_id = 10681)
+```
+
+### Example: `filter_col = username, filter_val = c("Kazu", "Lawzama"), image_id == "10681"`
+
+```{r}
+gg_users_image(x = ONC2_bucc_carto,
+               filter_col = username, filter_val = c("Kazu", "Lawzama"),
+               image_id = 10681)
+```
+
+## Compare annotations of the same image
+### Super-impose annotations
+This allows to check visually what sizes of buffer we can use to determine animals discovered by two persons.
+
+```{r}
+# Number of animals seen on the image by username
+ONC2_bucc %>% 
+  filter(image_id == 10681) %>% 
+  count(user_id)
+
+gg_users_image(x = ONC2_bucc_carto,
+               image_id = 10681, buffer = 10)  
+
+```
+
+### Find common animals between users
+
+#### Method detailed
+
+*These steps do not have to be run as they are included in `find_groups_in_image` function presented below. These steps are here to explain the method.*
+
+To compute statistics on individuals on images, it is important to know if different users found the same individuals. There is a variability in positioning individuals. Hence, to find out common individuals between users, we need to look in the neighborhood.
+A quick exploration suggests a buffer area of 10 pixels could be enough for finding overlapping annotations.  
+The following steps are here to detail the complete process, but at the end, they are all included in a unique fonction `find_commons`. *Note that functions are adapted to the structure of the examle dataset, included column names.*
+
+For each image steps are:
+
+- Create Voronoi polygons around sf features by `user_id`. Voronoi is necessary to get non overlapping buffer areas of too close individuals. This also allows for super-imposed individuals.
+- Crop Voronoi with buffer area. This avoids to look in a too far neighborhood.
+- Transform Voronoi as raster by `user_id`. Transforming polygons into pixels allow to find out the most overlapping groups of polygons among users.
+- Stack all rasters by `image_id`
+
+```{r, fig.width=10, fig.height=4, out.width='90%'}
+# Choose one image for one user
+image_id <- "10681"
+user_id <- "Kazu-100"
+
+bucc_image_user <- ONC2_bucc_carto %>% 
+  dplyr::filter(image_id == !!image_id,
+                user_id == !!user_id)
+
+r_image <- raster(bucc_image_user, res = 0.5)
+dist_buffer <- 10
+
+# Calculate voronoi for one user_id
+image_user_intermediates <- voronoi_rasterize(
+  x = bucc_image_user,
+  dist_buffer = dist_buffer,
+  r_image = r_image,
+  keep_intermediate = TRUE)
+
+# Show intermediate steps
+p1 <- ggplot(image_user_intermediates$points_in_voronoi) +
+  geom_sf(aes(fill = image_pol_id)) +
+  geom_sf(data = st_cast(st_geometry(bucc_image_user), "POINT"), size = 0.25) +
+  theme_images(x = image_user_intermediates$points_in_voronoi, fill = "c", color = NULL)
+  
+p2 <- ggplot(image_user_intermediates$points_in_voronoi_in_buffer) +
+  geom_sf(aes(fill = image_pol_id)) +
+    geom_sf(data = st_cast(st_geometry(bucc_image_user), "POINT"), size = 0.25) +
+  theme_images(x = image_user_intermediates$points_in_voronoi, fill = "c", color = NULL)
+
+p3 <- gplot(image_user_intermediates$voronoi_in_buffer_as_raster) +
+  geom_tile(aes(fill = value)) +
+  theme_images(x = image_user_intermediates$points_in_voronoi, fill = "c", color = NULL, na.value = NA)
+
+cowplot::plot_grid(plotlist = list(p1, p2, p3), ncol = 3)
+
+```
+
+The above intermediate steps are included in the `voronoi_stacker` function, which stacks rasters of all `user_id`.
+
+```{r}
+image_id <- "10681"
+bucc_image <- ONC2_bucc_carto %>% 
+  dplyr::filter(image_id == !!image_id)
+
+r_image <- raster(bucc_image, res = 0.5)
+dist_buffer <- 15
+
+bucc_voronoi_stack <- voronoi_stacker(x = bucc_image,
+           dist_buffer = dist_buffer,
+           r_image = r_image)
+  
+gplot(bucc_voronoi_stack) +
+  geom_tile(aes(fill = value)) +
+  facet_wrap(~variable) +
+  theme_images(x = image_user_intermediates$points_in_voronoi,
+               fill = "c", color = NULL, na.value = NA) +
+  ggtitle("Pixels numbered according to marked individuals")
+```
+
+For each pixel of the stack, we can define a group of polygons with the same size as the number of `user_id`. Indeed, an important part of pixels are not covered by polygons and will be identified as `NA-...-NA-...-NA`. Once removed those pixels, we can find the most represented groups of polygons.  
+
+```{r}
+# Combine layers and find groups of polygons
+bucc_groups_count <- group_pixels_count(bucc_voronoi_stack)
+bucc_groups_count
+```
+
+Problem is that some polygons are in more or less big groups, sometimes being in combination with two different polygons of the same user. We need to find out the best combinations of polygons to associate them to individuals really appearing on the original images.  
+In step 1, for each polygon independently:
+
+- Choose group when associated to maximum other polygons
+- Choose group with highest surface in common
+
+With these two rules, some chosen groups may include polygons associated to other groups.
+
+```{r}
+#' Find in which groups are each polygons
+all_image_pol_ids <- pull(bucc_image, image_pol_id) %>% unique()
+
+bucc_groups_top <- find_top_groups(bucc_groups_count,
+                                   all_image_pol_ids)
+test_ids_in_group <- test_groups_kept(bucc_groups_top)
+
+# Show in how many groups are individuals (Should be only one)
+test_ids_in_group$ids_in_groups_count
+```
+
+It is necessary to create a loop to reduce grouping possibilities based on same rules.  
+In step two, for each `image_pol_id` found in multiple groups, keep the only group following the above two rules. Others are removed from list of possibilities. Step one is run again without these groups. Run these two steps until each polygon is found in one and only one group. *If an `image_pol_id` has no group left, it is included in a group alone*
+
+```{r}
+# If image_pol_ids are not unique reduce possibilities until it is good
+if (test_ids_in_group$max_groups > 1) {
+  # Run again group selection while removing groups with problems
+  # _Find groups to remove
+  test_ids_in_group2 <- test_ids_in_group
+  bucc_groups_top2 <- bucc_groups_top
+  group_remove2 <- NULL
+  
+  while (test_ids_in_group2$max_groups > 1) {
+
+    group_remove <- test_ids_in_group2$ids_in_groups_count %>% 
+      filter(n > 1) %>% 
+      inner_join(test_ids_in_group2$ids_in_groups, by = "list_ids") %>% 
+      inner_join(bucc_groups_top2, by = "group_kept") %>% 
+      dplyr::select(-image_pol_id) %>% 
+      distinct() %>% 
+      group_by(list_ids) %>% 
+      arrange(desc(n_pols), desc(n_pixels)) %>% 
+      slice(-1) %>% 
+      pull(group_kept) %>% 
+      unique()
+    
+    group_remove2 <- unique(c(group_remove2, group_remove))
+    
+    bucc_groups_top2 <- bucc_groups_count %>% 
+      filter(!grouped_ids %in% group_remove2) %>% 
+      find_top_groups(all_ids = all_image_pol_ids)
+    
+    # bucc_groups_top2 %>% filter(grepl(7, group_kept))
+    # bucc_groups_top2 %>% filter(grepl(32, group_kept))
+    
+    test_ids_in_group2 <- test_groups_kept(bucc_groups_top2)
+    
+  }
+  # Retrieve success grouping
+  bucc_groups_top <- bucc_groups_top2
+  # Last verification
+  test_ids_in_group <- test_groups_kept(bucc_groups_top)
+}
+
+# Show in how many groups are individuals (Should be only one)
+test_ids_in_group$ids_in_groups_count
+```
+
+#### Function: Find groups in one image
+
+The above procedure is included in a unique function available for a unique image: `find_groups_in_image(x, image_id)` which adds the group name to the original dataset.  
+We can then verify the grouping procedure visually.
+
+```{r}
+# Add group names in image_sf
+bucc_image_grouped <- ONC2_bucc_carto %>% 
+  find_groups_in_image(image_id = "10681")
+
+# Create specific image with group names
+bucc_image_grouped_groups <- bucc_image_grouped %>% 
+  group_by(group_kept) %>% 
+  summarize() %>% 
+  st_centroid() %>% 
+  cbind(st_coordinates(.))
+
+ggplot(bucc_image_grouped %>% 
+         mutate(group_kept = 
+         forcats::fct_reorder(group_kept, desc(n_pols)))
+       ) +
+    geom_sf(aes(color = group_kept),
+      show.legend = "line",
+      size = 2 #alpha = 0.1
+    ) +
+  ggrepel::geom_text_repel(
+    data = bucc_image_grouped_groups,
+    aes(x = X, y = Y, label = group_kept)) +
+    theme_images(x = bucc_image_grouped, fill = NULL, color = "d", na.value = "grey20") +
+  guides(color = FALSE) +
+  ggtitle("Identification of groups of marked individuals")
+```
+
+### Find all groups for all images
+
+Everything can be included in a unique function `find_groups_in_all_images` to explore the entire dataset at once.  
+This takes some time and some place:  
+
+- ~30min on dual core
+- Be sure to have at least **10Go RAM** available, otherwise use `find_groups_in_image` iteratively in a loop for instance.
+
+```{r, eval=FALSE}
+# Chunk not evaluated in Rmd as results are saved
+ONC2_bucc_carto_groups <- find_groups_in_all_images(ONC2_bucc_carto, .progress = TRUE, keep_list = FALSE, as_sf = FALSE)
+
+if (!dir.exists(here::here("inst/outputs"))) {
+ dir.create("inst/outputs", recursive = TRUE) 
+}
+
+readr::write_rds(
+  ONC2_bucc_carto_groups,
+  here::here("inst/outputs", "ONC2_bucc_carto_groups.rds"), 
+  compress = "gz")
+
+```
+```{r}
+outwd <- system.file("outputs", package = "deeptools")
+ONC2_bucc_carto_groups <- readr::read_rds(file.path(outwd, "ONC2_bucc_carto_groups.rds"))
+```
+
+## Calculate statistics on images
+*As a reminder, a group of objects is supposed to be a unique individual.*
+
+### Number of objects per image (already known before)
+```{r}
+# ONC2_bucc_carto_groups 
+
+# Number of objects per image (already known before)
+bucc_nobjects <- ONC2_bucc_carto_groups %>% 
+  count(image_id) %>% 
+  rename(n_objects = n) %>% 
+  count(n_objects) %>% 
+  arrange(desc(n)) %>% 
+  rename(n_images = n)
+
+# Number of marked objects by images
+bucc_nobjects
+
+# Plot
+ggplot(bucc_nobjects) +
+  geom_col(aes(x = n_objects, y = n_images), width = 1, 
+           fill = yellow, colour = grey) +
+  ggtitle("Total number of objects identified in images") +
+  xlab("Number of objects by image") +
+  ylab("Number of images") +
+  theme(panel.background = element_rect(fill = blue))
+```
+
+### Statistics on groups
+
+Calculate the number of users who marked the same individual. The `proportion` column can be used as a threshold to decide if the individual is kept. Indeed, an individual observed by only one of the users may not be a real individual.
+
+```{r}
+# Stats on groups
+bucc_groups <- ONC2_bucc_carto_groups %>% 
+  group_by(image_id, group_kept) %>% 
+  summarise(
+    n_users = n(),
+    n_user_id = mean(n_user_id),
+    proportion = n()/mean(n_user_id)
+  ) %>% 
+  ungroup()
+
+# Number of individuals ~ proportion
+bucc_groups
+
+# Plot
+bucc_groups %>% 
+  ggplot() +
+  geom_histogram(aes(proportion), bins = 10,
+                 fill = yellow, colour = grey) +
+  ggtitle("Number of individuals ~ proportion") +
+  xlab("Proportion of users who identified an individual") +
+  ylab("Number of individuals in this case") +
+  theme(panel.background = element_rect(fill = blue))
+```
+
+### Statistics on number of groups by image
+
+Calculate the number of groups in all images.
+
+```{r}
+## Stats on nb groups by image
+bucc_ngroups_count <- bucc_groups %>% 
+  group_by(image_id) %>% 
+  summarise(n_groups = n()) 
+
+# Number of images
+bucc_ngroups_count %>% count(n_groups)
+
+# Plot
+ggplot(bucc_ngroups_count) +
+  geom_histogram(aes(x = n_groups), bins = 30,
+                 fill = yellow, colour = grey) +
+  ggtitle("Number of groups (~individuals) in images") +
+  xlab("Number of groups by image") + ylab("Number of images") +
+  theme(panel.background = element_rect(fill = blue))
+```
+
+If we only keep groups identified by at least half of the users, we can recalculate the number of groups by image.
+
+```{r}
+## Stats on nb groups by image
+bucc_ngroups_count_thd <- bucc_groups %>% 
+  filter(proportion >= 0.5) %>% 
+  group_by(image_id) %>% 
+  summarise(n_groups = n()) 
+
+# Number of images
+bucc_ngroups_count_thd %>% count(n_groups)
+
+# Plot
+ggplot(bucc_ngroups_count_thd) +
+  geom_histogram(aes(x = n_groups), bins = 30,
+                 fill = yellow, colour = grey) +
+  ggtitle("Number of groups (~individuals) in images") +
+  xlab("Groups with proportion >= 0.5 by image") + ylab("Number of images") +
+  theme(panel.background = element_rect(fill = blue))
+```
+
+## Estimate average size of individuals
+
+*We assume that a group is a unique individual.*  
+We also remove groups identified by less than 50% of users.
+
+```{r}
+# Mean size of individuals
+bucc_lengths <- ONC2_bucc_carto_groups %>% 
+  left_join(bucc_groups %>% 
+              dplyr::select(image_id, group_kept, proportion),
+            by = c("image_id", "group_kept")) %>% 
+  filter(proportion >= 0.5) %>% 
+  group_by(image_id, group_kept) %>% 
+  summarise(mean_length = mean(length))
+
+ggplot(bucc_lengths) +
+  geom_histogram(aes(mean_length), bins = 50,
+                 fill = yellow, colour = grey) +
+  scale_x_log10() +
+  theme(panel.background = element_rect(fill = blue)) +
+  ggtitle("Distribution of lengths of individuals") +
+  xlab("Group mean length (log scale)") +
+  ylab("Number of individuals")
+
+```
