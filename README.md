@@ -10,7 +10,7 @@ Install from GitHub package {deeptools}
 ---------------------------------
 
 ``` r
-remotes::install_github("DeepSeaSpy/deeptools")
+remotes::install_github("Deep-Sea-Spy/deeptools")
 ```
 
 Install local package {deeptools}
